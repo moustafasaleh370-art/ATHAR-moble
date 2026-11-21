@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <style>
+        img {
+  max-width: 100%;
+  height: auto;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+@media (max-width: 900px) {
+  header {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 0 1rem;
+    text-align: center;
+  }
+
+  .navigation ul {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  .hero {
+    flex-direction: column;
+    padding: 0 1rem;
+    text-align: center;
+  }
+
+  .herosup,
+  .herosuper {
+    align-items: center;
+  }
+
+  .hero img {
+    width: 70%;
+    max-width: 280px;
+    height: auto;
+  }
+
+  .name {
+    font-size: 2rem;
+  }
+
+  .aboutme,
+  .about {
+    flex-direction: column;
+    gap: 2rem;
+    margin: 2rem auto;
+    padding: 0 1rem;
+  }
+
+  .aboutmepar,
+  .par {
+    text-align: left;
+  }
+
+  .work,
+  .works {
+    padding: 3rem 1rem;
+    margin: 2rem 0;
+  }
+
+  .workscontainer {
+    align-items: center;
+    margin: 2rem auto;
+    padding: 0 1rem;
+  }
+
+  .works ul {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .works li {
+    padding: 1rem;
+  }
+
+  .works li img {
+    width: 100%;
+    max-width: 300px;
+    height: auto;
+  }
+
+  .works li img:hover {
+    transform: scale(1.05);
+  }
+
+  footer {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  h1 {
+    font-size: 1.6rem;
+  }
+
+  .name {
+    font-size: 1.6rem;
+  }
+
+  .navigation ul {
+    gap: 0.75rem;
+    font-size: 0.9rem;
+  }
+}
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 5px;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #7bff00;
+        }
+        h1 {
+            color: #333;
+        }
+        p {
+            color: #555;
+            line-height: 1.6;
+        }
+    
+
+body {
+  margin: 0;
+  width: 100%;
+}
+
+img, video {
+  max-width: 100%;
+  height: auto;
+}
+
+
+       form{
+        background-color: #f2f2f2;
+        padding: 20px;
+        border-radius: 5px;
+        max-width: 900px;
+        margin: 0 auto;
+        height: 400px;
+    }
+    .submit-button {
+        background-color: #4CAF50;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        cursor: pointer;
+        font-size: 16px;
+        border-radius: 5px;
+         align-items: center;
+         width: 900px;
+    }
+    
+    
+      </style>
+    <h1>مالذي تعلمته من الموقع</h1>
+    
+        <p>لقد تعلمت من الموقع أهمية الحفاظ على البيئة وتقليل الهدر وإعادة التدوير. كما تعلمت أن كل شخص يمكن أن يساهم في حماية البيئة من خلال اتخاذ إجراءات بسيطة في حياته اليومية.</p>
+    
+        
+      <form action="https://api.web3forms.com/submit" method="POST">
+  <input type="hidden" name="access_key" value="a3af374b-70ff-4d99-acf1-52472f72811c">
+  <b>name</b>
+  <input type="text" name="name" required>
+ <b>email</b>
+  <input type="email" name="email" required>
+  <b>massage</b>
+  <textarea name="message" required></textarea>
+  <button type="submit">Submit</button>
+</form>
+   
+</body>
+</html>
