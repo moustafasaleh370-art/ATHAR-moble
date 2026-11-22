@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>عدّاد الأثر البيئي</title>
+
+</head>
+<body>
+
+  <section class="eco-widget" aria-label="عداد الأثر الشخصي والمجتمعي">
+    <!-- رأس البطاقة والتبديل بين الشخصي والمجتمعي -->
+    <header class="eco-header">
+      <div>
+        <span class="eco-badge" id="ecoLevelBadge">المستوى: شتلة خضراء 🌱</span>
+        <h2 class="eco-title">أثرك البيئي المباشر</h2>
+      </div>
+
+      <div class="eco-tabs" role="tablist">
+        <button class="tab-btn active" data-mode="personal" role="tab" aria-selected="true">
+          أثري الشخصي
+        </button>
+        <button class="tab-btn" data-mode="community" role="tab" aria-selected="false">
+          أثر المجتمع
+        </button>
+      </div>
+    </header>
+
+    <!-- الجملة التحفيزية الواضحة -->
+    <div class="eco-highlight-banner" id="impactSummaryText">
+      وفّرت حتى الآن <strong>14 كجم</strong> من انبعاثات الكربون، و<strong>420 لتراً</strong> من الماء.
+    </div>
+
+    <!-- بطاقات الأرقام -->
+    <div class="eco-stats-grid">
+      <div class="stat-card">
+        <span class="stat-icon">🌍</span>
+        <div class="stat-value">
+          <span id="co2Counter">0</span> <small>كجم</small>
+        </div>
+        <div class="stat-label">انبعاثات كربون مُوفّرة</div>
+      </div>
+
+      <div class="stat-card">
+        <span class="stat-icon">💧</span>
+        <div class="stat-value">
+          <span id="waterCounter">0</span> <small>لتر</small>
+        </div>
+        <div class="stat-label">مياه عذبة مُوفّرة</div>
+      </div>
+
+      <div class="stat-card">
+        <span class="stat-icon">⭐</span>
+        <div class="stat-value">
+          <span id="pointsCounter">0</span> <small>نقطة</small>
+        </div>
+        <div class="stat-label">رصيد النقاط الخضراء</div>
+      </div>
+    </div>
+
+    <!-- شريط التقدم للمستوى التالي -->
+    <div class="eco-progress-box">
+      <div class="progress-info">
+        <span id="progressLabel">التقدم نحو مستوى "شجرة مثمرة 🌳"</span>
+        <span id="progressPercent">0%</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+    </div>
+
+    <!-- نموذج تسجيل نشاط جديد لتجربة التحديث الحي -->
+    <form class="eco-action-form" id="logActivityForm">
+      <select id="activityType" aria-label="نوع النشاط">
+        <option value="plastic">إعادة تدوير بلاستيك (كجم)</option>
+        <option value="paper">إعادة تدوير ورق وكرتون (كجم)</option>
+        <option value="metal">إعادة تدوير معادن (كجم)</option>
+        <option value="energy">ترشيد كهرباء (كيلوواط/ساعة)</option>
+      </select>
+
+      <input
+        type="number"
+        id="activityAmount"
+        min="0.5"
+        step="0.5"
+        value="1"
+        placeholder="الكمية"
+        required
+      />
+
+      <button type="submit" class="eco-submit-btn">+ سجّل إنجازك</button>
+    </form>
+  </section>
+
+  <script>
+    // معاملات التحويل لكل وحدة نشاط
+const IMPACT_RATES = {
+  plastic: { co2: 1.8, water: 25, points: 15 },
+  paper:   { co2: 1.1, water: 30, points: 10 },
+  metal:   { co2: 4.0, water: 40, points: 25 },
+  energy:  { co2: 0.5, water: 2,  points: 8  }
+};
+
+// البيانات الافتراضية (تبدأ بالقيم المذكورة في مثالك)
+const DEFAULT_DATA = {
+  personal: { co2: 14, water: 420, points: 140 },
+  community: { co2: 18450, water: 512000, points: 165000 }
+};
+
+let ecoData = JSON.parse(localStorage.getItem("ecoImpactData")) || DEFAULT_DATA;
+let currentMode = "personal";
+
+// عناصر الواجهة
+const co2El = document.getElementById("co2Counter");
+const waterEl = document.getElementById("waterCounter");
+const pointsEl = document.getElementById("pointsCounter");
+const summaryEl = document.getElementById("impactSummaryText");
+const progressFill = document.getElementById("progressFill");
+const progressPercent = document.getElementById("progressPercent");
+const progressLabel = document.getElementById("progressLabel");
+const levelBadge = document.getElementById("ecoLevelBadge");
+
+// دالة تحريك الأرقام بسلاسة
+function animateValue(element, target) {
+  const start = Number(element.textContent.replace(/,/g, "")) || 0;
+  const duration = 500;
+  const startTime = performance.now();
+
+  function update(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const current = start + (target - start) * progress;
+
+    element.textContent = Number.isInteger(target)
+      ? Math.round(current).toLocaleString("ar-EG")
+      : current.toFixed(1);
+
+    if (progress < 1) {
+      requestAnimationFrame(update);
+    }
+  }
+  requestAnimationFrame(update);
+}
+
+// تحديد المستوى وشريط التقدم بناءً على النقاط
+function updateLevelAndProgress(points) {
+  let levelName = "بذرة 🌱";
+  let nextTarget = 100;
+  let nextLevelName = "شتلة خضراء 🌿";
+
+  if (points >= 1000) {
+    levelName = "غابة مستدامة 🌲";
+    nextTarget = 2500;
+    nextLevelName = "حامي الكوكب 🌍";
+  } else if (points >= 300) {
+    levelName = "شجرة مثمرة 🌳";
+    nextTarget = 1000;
+    nextLevelName = "غابة مستدامة 🌲";
+  } else if (points >= 100) {
+    levelName = "شتلة خضراء 🌿";
+    nextTarget = 300;
+    nextLevelName = "شجرة مثمرة 🌳";
+  }
+
+  const percent = Math.min(Math.round((points / nextTarget) * 100), 100);
+  levelBadge.textContent = `المستوى: ${levelName}`;
+  progressLabel.textContent = `التقدم نحو مستوى "${nextLevelName}"`;
+  progressPercent.textContent = `${percent}%`;
+  progressFill.style.width = `${percent}%`;
+}
+
+// تحديث العرض بالكامل
+function renderWidget() {
+  const data = ecoData[currentMode];
+
+  animateValue(co2El, data.co2);
+  animateValue(waterEl, data.water);
+  animateValue(pointsEl, data.points);
+
+  const co2Formatted = data.co2.toLocaleString("ar-EG");
+  const waterFormatted = data.water.toLocaleString("ar-EG");
+
+  if (currentMode === "personal") {
+    summaryEl.innerHTML = `وفّرت حتى الآن <strong>${co2Formatted} كجم</strong> من انبعاثات الكربون، و<strong>${waterFormatted} لتراً</strong> من الماء.`;
+    updateLevelAndProgress(data.points);
+  } else {
+    summaryEl.innerHTML = `وفّر مجتمعنا معاً <strong>${co2Formatted} كجم</strong> من انبعاثات الكربون، و<strong>${waterFormatted} لتراً</strong> من الماء.`;
+    levelBadge.textContent = "إنجاز جماعي 🤝";
+    progressLabel.textContent = "هدف المجتمع الشهري (20,000 كجم كربون)";
+    const communityPercent = Math.min(Math.round((data.co2 / 20000) * 100), 100);
+    progressPercent.textContent = `${communityPercent}%`;
+    progressFill.style.width = `${communityPercent}%`;
+  }
+}
+
+// التبديل بين التبويبات
+document.querySelectorAll(".tab-btn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".tab-btn").forEach((b) => {
+      b.classList.remove("active");
+      b.setAttribute("aria-selected", "false");
+    });
+    btn.classList.add("active");
+    btn.setAttribute("aria-selected", "true");
+    currentMode = btn.dataset.mode;
+    renderWidget();
+  });
+});
+
+// إضافة نشاط جديد وتحديث الأثر الشخصي والمجتمعي معاً
+document.getElementById("logActivityForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const type = document.getElementById("activityType").value;
+  const amount = parseFloat(document.getElementById("activityAmount").value);
+
+  if (!amount || amount <= 0) return;
+
+  const rate = IMPACT_RATES[type];
+  const addedCo2 = Number((amount * rate.co2).toFixed(1));
+  const addedWater = Math.round(amount * rate.water);
+  const addedPoints = Math.round(amount * rate.points);
+
+  // تحديث الأثر الشخصي والمجتمعي
+  ecoData.personal.co2 = Number((ecoData.personal.co2 + addedCo2).toFixed(1));
+  ecoData.personal.water += addedWater;
+  ecoData.personal.points += addedPoints;
+
+  ecoData.community.co2 = Number((ecoData.community.co2 + addedCo2).toFixed(1));
+  ecoData.community.water += addedWater;
+  ecoData.community.points += addedPoints;
+
+  localStorage.setItem("ecoImpactData", JSON.stringify(ecoData));
+  renderWidget();
+});
+
+// التشغيل الأولي
+renderWidget();
+  </script>
+  <style>
+    :root {
+  --bg-page: #f3f7f4;
+  --bg-card: #ffffff;
+  --primary: #15803d;
+  --primary-dark: #166534;
+  --primary-soft: #dcfce7;
+  --text-main: #1e293b;
+  --text-muted: #64748b;
+  --border-color: #e2e8f0;
+  --radius: 16px;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: system-ui, -apple-system, "Segoe UI", Tahoma, sans-serif;
+}
+
+body {
+  margin: 0;
+  padding: 24px;
+  background-color: var(--bg-page);
+  color: var(--text-main);
+  display: flex;
+  justify-content: center;
+}
+
+.eco-widget {
+  width: 100%;
+  max-width: 720px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: 0 10px 25px rgba(21, 128, 61, 0.08);
+}
+
+.eco-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.eco-badge {
+  display: inline-block;
+  background: var(--primary-soft);
+  color: var(--primary-dark);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 999px;
+  margin-bottom: 6px;
+}
+
+.eco-title {
+  margin: 0;
+  font-size: 1.4rem;
+}
+
+.eco-tabs {
+  display: flex;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 12px;
+}
+
+.tab-btn {
+  border: none;
+  background: transparent;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.tab-btn.active {
+  background: #ffffff;
+  color: var(--primary);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.eco-highlight-banner {
+  background: linear-gradient(135deg, #ecfdf5, #dcfce7);
+  border-right: 4px solid var(--primary);
+  padding: 14px 18px;
+  border-radius: 10px;
+  font-size: 1.05rem;
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+
+.eco-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  background: #f8fafc;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+}
+
+.stat-icon {
+  font-size: 1.8rem;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.stat-value {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--primary-dark);
+}
+
+.stat-value small {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.eco-progress-box {
+  margin-bottom: 22px;
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--text-main);
+}
+
+.progress-track {
+  height: 10px;
+  background: #e2e8f0;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #22c55e, #15803d);
+  border-radius: 999px;
+  transition: width 0.5s ease;
+}
+
+.eco-action-form {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+}
+
+.eco-action-form select,
+.eco-action-form input {
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 0.95rem;
+}
+
+.eco-action-form select {
+  flex: 2;
+  min-width: 180px;
+}
+
+.eco-action-form input {
+  flex: 1;
+  min-width: 90px;
+}
+
+.eco-submit-btn {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.eco-submit-btn:hover {
+  background: var(--primary-dark);
+}
+  </style>
+</body>
+</html>
